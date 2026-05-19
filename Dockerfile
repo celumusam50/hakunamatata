@@ -28,25 +28,23 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Remove default Apache page
-RUN rm -f /var/www/html/index.html
-
 # Copy all project files
 COPY . .
 
 # Install PHP dependencies
 RUN cd api && composer install --no-dev --optimize-autoloader
 
-# Set Apache to allow .htaccess overrides
-RUN echo '<Directory /var/www/html>\n\
+# Remove default Apache page and enable .htaccess overrides
+RUN rm -f /var/www/html/index.html \
+    && echo '<Directory /var/www/html>\n\
+    Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
-</Directory>' > /etc/apache2/conf-available/allow-override.conf \
-    && a2enconf allow-override
+</Directory>' >> /etc/apache2/sites-available/000-default.conf
 
 # Fix uploads folder permissions
 RUN mkdir -p api/uploads/products \
-    && chown -R www-data:www-data api/uploads \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 api/uploads
 
 EXPOSE 80
