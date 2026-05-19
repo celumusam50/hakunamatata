@@ -64,12 +64,8 @@ function queryParam(string $key, mixed $default = null): mixed {
 
 // ── CORS ─────────────────────────────────────────────────────────
 function applyCors(): void {
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $allowed = CORS_ORIGINS;
-
-    if (in_array($origin, $allowed) || APP_ENV === 'development') {
-        header('Access-Control-Allow-Origin: ' . ($origin ?: '*'));
-    }
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
+    header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
     header('Access-Control-Allow-Credentials: true');
