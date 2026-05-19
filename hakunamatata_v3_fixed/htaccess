@@ -1,0 +1,11 @@
+Options -Indexes
+DirectoryIndex splash.php index.php index.html
+
+RewriteEngine On
+
+# Don't rewrite requests to the api folder
+RewriteRule ^api(/.*)?$ - [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ splash.php [QSA,L]

@@ -1,0 +1,17 @@
+# ── Sensitive config (never commit) ──────────────────────────────
+.env
+.env.local
+
+# ── Composer dependencies (Railway installs these automatically) ──
+api/vendor/
+
+# ── Uploaded product images (not part of source code) ────────────
+api/uploads/products/*
+!api/uploads/products/.gitkeep
+
+# ── System / editor files ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
