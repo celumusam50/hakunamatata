@@ -1,29 +1,19 @@
-FROM ubuntu:22.04
+FROM php:8.2-apache
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV COMPOSER_ALLOW_SUPERUSER=1
+# Fix MPM conflict
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
+          /etc/apache2/mods-enabled/mpm_event.load \
+    && ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
+    && ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
+    && ln -sf /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/rewrite.load
 
-# Install Apache, PHP and required extensions
-RUN apt-get update && apt-get install -y \
-    apache2 \
-    php8.1 \
-    php8.1-mysql \
-    php8.1-xml \
-    php8.1-mbstring \
-    php8.1-curl \
-    libapache2-mod-php8.1 \
-    curl \
-    unzip \
-    && apt-get clean
-
-# Make php8.1 the default php
-RUN ln -sf /usr/bin/php8.1 /usr/bin/php
-
-# Enable mod_rewrite
-RUN a2enmod rewrite
+# Install PHP extensions needed for MySQL
+RUN docker-php-ext-install pdo pdo_mysql
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Set working directory
 WORKDIR /var/www/html
@@ -31,16 +21,14 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
+# Rename htaccess to .htaccess if needed
+RUN if [ -f htaccess ] && [ ! -f .htaccess ]; then cp htaccess .htaccess; fi
+
 # Install PHP dependencies
 RUN cd api && composer install --no-dev --optimize-autoloader
 
-# Rename htaccess files (saved without dot)
-RUN if [ -f /var/www/html/htaccess ] && [ ! -f /var/www/html/.htaccess ]; then \
-        cp /var/www/html/htaccess /var/www/html/.htaccess; \
-    fi
-
-# Remove Ubuntu default Apache page and configure VirtualHost with api directory
-RUN rm -f /var/www/html/index.html /var/www/html/index.htm \
+# Configure Apache VirtualHost
+RUN rm -f /var/www/html/index.html \
     && echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html\n\
     DirectoryIndex splash.php index.php\n\
@@ -56,11 +44,9 @@ RUN rm -f /var/www/html/index.html /var/www/html/index.htm \
     </Directory>\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
-# Fix uploads folder permissions
+# Fix permissions
 RUN mkdir -p api/uploads/products \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 api/uploads
 
 EXPOSE 80
-
-CMD ["apache2ctl", "-D", "FOREGROUND"]
