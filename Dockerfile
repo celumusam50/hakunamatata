@@ -24,50 +24,35 @@ RUN mkdir -p api/uploads/products \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 api/uploads
 
-# Write startup script — builds nginx config at runtime using $PORT
-RUN cat > /start.sh << 'EOF'
-#!/bin/sh
-PORT="${PORT:-80}"
+# Write nginx config with RAILWAYPORT as placeholder (replaced at runtime by sed)
+RUN echo 'server { \n\
+    listen RAILWAYPORT; \n\
+    root /var/www/html; \n\
+    index splash.php index.php index.html; \n\
+    location /api { \n\
+        try_files $uri /api/index.php?$query_string; \n\
+        location ~ \\.php$ { \n\
+            fastcgi_pass 127.0.0.1:9000; \n\
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n\
+            fastcgi_param REQUEST_URI $request_uri; \n\
+            include fastcgi_params; \n\
+        } \n\
+    } \n\
+    location / { \n\
+        try_files $uri $uri/ /splash.php?$query_string; \n\
+    } \n\
+    location ~ \\.php$ { \n\
+        fastcgi_pass 127.0.0.1:9000; \n\
+        fastcgi_index index.php; \n\
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n\
+        fastcgi_param REQUEST_URI $request_uri; \n\
+        include fastcgi_params; \n\
+    } \n\
+}' > /etc/nginx/sites-available/default
 
-cat > /etc/nginx/sites-available/default << NGINX
-server {
-    listen ${PORT};
-    root /var/www/html;
-    index splash.php index.php index.html;
-
-    location /api {
-        try_files \$uri /api/index.php?\$query_string;
-        location ~ \.php$ {
-            fastcgi_pass 127.0.0.1:9000;
-            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-            fastcgi_param REQUEST_URI \$request_uri;
-            include fastcgi_params;
-        }
-    }
-
-    location / {
-        try_files \$uri \$uri/ /splash.php?\$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass 127.0.0.1:9000;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-        fastcgi_param REQUEST_URI \$request_uri;
-        include fastcgi_params;
-    }
-}
-NGINX
-
-echo "Starting PHP-FPM..."
-php-fpm -D
-
-echo "Starting Nginx on port ${PORT}..."
-nginx -g 'daemon off;'
-EOF
-
-RUN chmod +x /start.sh
+# Startup: replace RAILWAYPORT placeholder with actual $PORT, start services
+CMD sed -i "s/RAILWAYPORT/${PORT:-80}/" /etc/nginx/sites-available/default \
+    && php-fpm -D \
+    && nginx -g 'daemon off;'
 
 EXPOSE 80
-
-CMD ["/start.sh"]
