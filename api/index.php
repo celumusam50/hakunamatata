@@ -1,8 +1,6 @@
 <?php
 // ================================================================
 //  HAKUNA MATATA — API Router
-//  Base URL: /api/
-//  All routes: /api/{resource}/{id?}/{action?}
 // ================================================================
 require_once __DIR__ . '/core.php';
 
@@ -27,9 +25,17 @@ require_once __DIR__ . '/middleware/auth.php';
 applyCors();
 
 // ── Parse URL ────────────────────────────────────────────────────
-$uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$base   = '/api';
-$path   = ltrim(str_replace($base, '', $uri), '/');
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Strip any known base prefix dynamically
+foreach (['/hakunamatata_v3/api', '/api'] as $base) {
+    if (str_starts_with($uri, $base)) {
+        $uri = substr($uri, strlen($base));
+        break;
+    }
+}
+
+$path   = ltrim($uri, '/');
 $parts  = array_values(array_filter(explode('/', $path)));
 
 $resource = $parts[0] ?? '';
@@ -53,5 +59,5 @@ match ($resource) {
     'settings'     => require __DIR__ . '/routes/settings.php',
     'upload'       => require __DIR__ . '/routes/upload.php',
     'ping'         => respond(['status' => 'ok', 'time' => date('c'), 'api' => 'Hakuna Matata v3']),
-    default        => respondError('Route not found', 404),
+    default        => respondError('Route not found: ' . $resource . ' | URI: ' . $_SERVER['REQUEST_URI'], 404),
 };
