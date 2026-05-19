@@ -1,7 +1,7 @@
 FROM php:8.2-fpm
 
-# Install Nginx and envsubst (gettext-base)
-RUN apt-get update && apt-get install -y nginx gettext-base \
+# Install Nginx
+RUN apt-get update && apt-get install -y nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
@@ -20,49 +20,54 @@ RUN if [ -f htaccess ] && [ ! -f .htaccess ]; then cp htaccess .htaccess; fi
 # Install PHP dependencies
 RUN cd api && composer install --no-dev --optimize-autoloader
 
-# Write Nginx config template — uses $PORT injected by Railway at runtime
-RUN cat > /etc/nginx/sites-available/default.template << 'NGINX'
+RUN mkdir -p api/uploads/products \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 api/uploads
+
+# Write startup script — builds nginx config at runtime using $PORT
+RUN cat > /start.sh << 'EOF'
+#!/bin/sh
+PORT="${PORT:-80}"
+
+cat > /etc/nginx/sites-available/default << NGINX
 server {
     listen ${PORT};
     root /var/www/html;
     index splash.php index.php index.html;
 
-    # API routing — pass full URI to api/index.php
     location /api {
-        try_files $uri /api/index.php?$query_string;
+        try_files \$uri /api/index.php?\$query_string;
         location ~ \.php$ {
             fastcgi_pass 127.0.0.1:9000;
-            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            fastcgi_param REQUEST_URI $request_uri;
+            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+            fastcgi_param REQUEST_URI \$request_uri;
             include fastcgi_params;
         }
     }
 
-    # Main site routing
     location / {
-        try_files $uri $uri/ /splash.php?$query_string;
+        try_files \$uri \$uri/ /splash.php?\$query_string;
     }
 
-    # PHP-FPM handler
     location ~ \.php$ {
         fastcgi_pass 127.0.0.1:9000;
         fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_param REQUEST_URI $request_uri;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param REQUEST_URI \$request_uri;
         include fastcgi_params;
     }
 }
 NGINX
 
-RUN mkdir -p api/uploads/products \
-    && chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 api/uploads
+echo "Starting PHP-FPM..."
+php-fpm -D
 
-# Startup: substitute $PORT into nginx config, then launch PHP-FPM + Nginx
-CMD export PORT="${PORT:-80}" \
-    && envsubst '${PORT}' < /etc/nginx/sites-available/default.template \
-         > /etc/nginx/sites-available/default \
-    && php-fpm -D \
-    && nginx -g 'daemon off;'
+echo "Starting Nginx on port ${PORT}..."
+nginx -g 'daemon off;'
+EOF
+
+RUN chmod +x /start.sh
 
 EXPOSE 80
+
+CMD ["/start.sh"]
