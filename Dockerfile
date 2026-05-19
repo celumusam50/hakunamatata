@@ -1,5 +1,8 @@
 FROM php:8.2-apache
 
+# Fix Apache MPM conflict: disable event, enable prefork (required for PHP)
+RUN a2dismod mpm_event && a2enmod mpm_prefork
+
 # Enable Apache mod_rewrite (needed for API routing)
 RUN a2enmod rewrite
 
@@ -15,7 +18,7 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
-# Install PHP dependencies (firebase/php-jwt)
+# Install PHP dependencies
 RUN cd api && composer install --no-dev --optimize-autoloader
 
 # Set Apache to allow .htaccess overrides
