@@ -7,10 +7,16 @@ RUN apt-get update && apt-get install -y \
     apache2 \
     php8.1 \
     php8.1-mysql \
+    php8.1-xml \
+    php8.1-mbstring \
+    php8.1-curl \
     libapache2-mod-php8.1 \
     curl \
     unzip \
     && apt-get clean
+
+# Make php8.1 the default php
+RUN ln -sf /usr/bin/php8.1 /usr/bin/php
 
 # Enable mod_rewrite
 RUN a2enmod rewrite
