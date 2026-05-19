@@ -28,7 +28,7 @@ RUN echo 'server {\n\
 \n\
     # API routing - pass full path to api/index.php\n\
     location /api {\n\
-        try_files $uri $uri/ /api/index.php?$query_string;\n\
+        try_files $uri /api/index.php?$query_string;\n\
         location ~ \.php$ {\n\
             fastcgi_pass 127.0.0.1:9000;\n\
             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
