@@ -15,6 +15,10 @@ $_uri_parts = array_values(array_filter(explode('/', ltrim(parse_url($_SERVER['R
 // $_uri_parts[0] = 'api', [1] = 'auth', [2] = 'login' etc.
 $sub = $_uri_parts[2] ?? $action ?? $parts[1] ?? '';
 
+// DEBUG - remove after fix
+respond(['debug' => true, 'uri' => $_SERVER['REQUEST_URI'], 'parts' => $_uri_parts, 'sub' => $sub, 'action' => $action ?? 'null']);
+exit;
+
 // ── LOGIN ────────────────────────────────────────────────────────
 if (method() === 'POST' && $sub === 'login') {
     $b = body();
