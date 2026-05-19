@@ -20,20 +20,26 @@ RUN if [ -f htaccess ] && [ ! -f .htaccess ]; then cp htaccess .htaccess; fi
 # Install PHP dependencies
 RUN cd api && composer install --no-dev --optimize-autoloader
 
-# Configure Nginx with proper PHP and API routing
+# Configure Nginx - pass full URI to PHP
 RUN echo 'server {\n\
     listen 80;\n\
     root /var/www/html;\n\
     index splash.php index.php index.html;\n\
 \n\
+    # API routing - pass full path to api/index.php\n\
+    location /api {\n\
+        try_files $uri $uri/ /api/index.php?$query_string;\n\
+        location ~ \.php$ {\n\
+            fastcgi_pass 127.0.0.1:9000;\n\
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
+            fastcgi_param REQUEST_URI $request_uri;\n\
+            include fastcgi_params;\n\
+        }\n\
+    }\n\
+\n\
     # Main site routing\n\
     location / {\n\
         try_files $uri $uri/ /index.php?$query_string;\n\
-    }\n\
-\n\
-    # API routing - route to api/index.php\n\
-    location /api/ {\n\
-        try_files $uri $uri/ /api/index.php?$query_string;\n\
     }\n\
 \n\
     # PHP-FPM handler\n\
@@ -41,6 +47,7 @@ RUN echo 'server {\n\
         fastcgi_pass 127.0.0.1:9000;\n\
         fastcgi_index index.php;\n\
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
+        fastcgi_param REQUEST_URI $request_uri;\n\
         include fastcgi_params;\n\
     }\n\
 }' > /etc/nginx/sites-available/default
