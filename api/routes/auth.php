@@ -10,7 +10,10 @@
 //  POST /auth/reset-password
 // ================================================================
 
-$sub = $action ?? $parts[1] ?? '';
+// Fix: parse sub-route directly from REQUEST_URI for Nginx compatibility
+$_uri_parts = array_values(array_filter(explode('/', ltrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/'))));
+// $_uri_parts[0] = 'api', [1] = 'auth', [2] = 'login' etc.
+$sub = $_uri_parts[2] ?? $action ?? $parts[1] ?? '';
 
 // ── LOGIN ────────────────────────────────────────────────────────
 if (method() === 'POST' && $sub === 'login') {
@@ -48,7 +51,7 @@ if (method() === 'POST' && $sub === 'login') {
             'first_name' => $user['first_name'],
             'last_name'  => $user['last_name'],
             'full_name'  => $user['full_name'],
-                        'phone'      => $user['phone'],
+            'phone'      => $user['phone'],
             'role'       => $user['role'],
             'city'       => $user['city'],
             'region'     => $user['region'],
@@ -104,7 +107,7 @@ if (method() === 'POST' && $sub === 'register') {
             'first_name' => $user['first_name'],
             'last_name'  => $user['last_name'],
             'full_name'  => $user['full_name'],
-                        'phone'      => $user['phone'],
+            'phone'      => $user['phone'],
             'role'       => $user['role'],
             'city'       => $user['city'],
         ],
@@ -170,7 +173,6 @@ if (method() === 'POST' && $sub === 'request-reset') {
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
-    // Always respond the same way to prevent user enumeration
     $otp    = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     $result = ['message' => 'If that email exists, a reset code has been sent.'];
 
@@ -178,7 +180,6 @@ if (method() === 'POST' && $sub === 'request-reset') {
         $hash    = password_hash($otp, PASSWORD_BCRYPT);
         $expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-        // Invalidate any existing unused tokens
         db()->prepare(
             "UPDATE password_reset_token SET used_at=NOW()
              WHERE user_id=? AND used_at IS NULL"
@@ -189,7 +190,6 @@ if (method() === 'POST' && $sub === 'request-reset') {
              VALUES (?, ?, ?)"
         )->execute([$user['user_id'], $hash, $expires]);
 
-        // In production: send via email/SMS. For dev, return OTP.
         if (APP_ENV === 'development') $result['otp'] = $otp;
     }
 
@@ -253,7 +253,6 @@ if (method() === 'POST' && $sub === 'reset-password') {
     db()->prepare("UPDATE password_reset_token SET used_at=NOW() WHERE reset_id=?")
         ->execute([$row['reset_id']]);
 
-    // Revoke all refresh tokens (force re-login on all devices)
     db()->prepare("UPDATE auth_token SET revoked_at=NOW() WHERE user_id=? AND revoked_at IS NULL")
         ->execute([$row['user_id']]);
 
