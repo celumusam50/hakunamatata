@@ -34,12 +34,22 @@ COPY . .
 # Install PHP dependencies
 RUN cd api && composer install --no-dev --optimize-autoloader
 
-# Remove Ubuntu default Apache page (AFTER copying project files)
+# Rename htaccess files (saved without dot)
+RUN if [ -f /var/www/html/htaccess ] && [ ! -f /var/www/html/.htaccess ]; then \
+        cp /var/www/html/htaccess /var/www/html/.htaccess; \
+    fi
+
+# Remove Ubuntu default Apache page and configure VirtualHost with api directory
 RUN rm -f /var/www/html/index.html /var/www/html/index.htm \
     && echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html\n\
     DirectoryIndex splash.php index.php\n\
     <Directory /var/www/html>\n\
+        Options Indexes FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    <Directory /var/www/html/api>\n\
         Options Indexes FollowSymLinks\n\
         AllowOverride All\n\
         Require all granted\n\
