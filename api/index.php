@@ -1,14 +1,12 @@
 <?php
 // ================================================================
 //  HAKUNA MATATA — API Router
-//  Base URL: /hakunamatata_v3/api/
-//  All routes: /hakunamatata_v3/api/{resource}/{id?}/{action?}
+//  Base URL: /api/
+//  All routes: /api/{resource}/{id?}/{action?}
 // ================================================================
 require_once __DIR__ . '/core.php';
 
-// ── Fix: Apache/XAMPP silently drops the Authorization header ─────────
-// getallheaders() reads ALL headers even ones Apache strips from $_SERVER.
-// We restore it before requireAuth() in any route needs it.
+// ── Fix: Apache silently drops the Authorization header ─────────
 if (empty($_SERVER['HTTP_AUTHORIZATION'])) {
     if (function_exists('getallheaders')) {
         foreach (getallheaders() as $k => $v) {
@@ -18,7 +16,6 @@ if (empty($_SERVER['HTTP_AUTHORIZATION'])) {
             }
         }
     }
-    // Fallback: some Apache CGI configs put it here instead
     if (empty($_SERVER['HTTP_AUTHORIZATION']) &&
         !empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
         $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
@@ -31,7 +28,7 @@ applyCors();
 
 // ── Parse URL ────────────────────────────────────────────────────
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$base   = '/hakunamatata_v3/api';
+$base   = '/api';
 $path   = ltrim(str_replace($base, '', $uri), '/');
 $parts  = array_values(array_filter(explode('/', $path)));
 
