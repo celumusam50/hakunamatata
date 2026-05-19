@@ -1,22 +1,28 @@
-FROM php:8.2-apache
+FROM ubuntu:22.04
 
-# Fix Apache MPM conflict — directly remove conflicting MPM symlinks
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
-    /etc/apache2/mods-enabled/mpm_event.load \
-    /etc/apache2/mods-enabled/mpm_worker.conf \
-    /etc/apache2/mods-enabled/mpm_worker.load \
-    && ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
-    && ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
-    && ln -sf /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/rewrite.load
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install PHP extensions needed for MySQL
-RUN docker-php-ext-install pdo pdo_mysql
+# Install Apache, PHP and required extensions
+RUN apt-get update && apt-get install -y \
+    apache2 \
+    php8.1 \
+    php8.1-mysql \
+    libapache2-mod-php8.1 \
+    curl \
+    unzip \
+    && apt-get clean
+
+# Enable mod_rewrite
+RUN a2enmod rewrite
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
+
+# Remove default Apache page
+RUN rm -f /var/www/html/index.html
 
 # Copy all project files
 COPY . .
@@ -37,3 +43,5 @@ RUN mkdir -p api/uploads/products \
     && chmod -R 755 api/uploads
 
 EXPOSE 80
+
+CMD ["apache2ctl", "-D", "FOREGROUND"]
