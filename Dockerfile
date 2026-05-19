@@ -1,7 +1,7 @@
 FROM php:8.2-fpm
 
-# Install Nginx
-RUN apt-get update && apt-get install -y nginx \
+# Install Nginx + Supervisor
+RUN apt-get update && apt-get install -y nginx supervisor \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
@@ -24,7 +24,7 @@ RUN mkdir -p api/uploads/products \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 api/uploads
 
-# Write nginx config — listen on 80 (Railway maps this automatically)
+# Nginx config
 RUN printf 'server {\n\
     listen 80;\n\
     root /var/www/html;\n\
@@ -53,9 +53,31 @@ RUN printf 'server {\n\
     }\n\
 }\n' > /etc/nginx/sites-available/default
 
-# Verify nginx config is valid at build time
+# Supervisor config — manages both PHP-FPM and Nginx
+RUN printf '[supervisord]\n\
+nodaemon=true\n\
+logfile=/var/log/supervisor/supervisord.log\n\
+pidfile=/var/run/supervisord.pid\n\
+\n\
+[program:php-fpm]\n\
+command=php-fpm -F\n\
+autostart=true\n\
+autorestart=true\n\
+stderr_logfile=/var/log/supervisor/php-fpm.err.log\n\
+stdout_logfile=/var/log/supervisor/php-fpm.out.log\n\
+\n\
+[program:nginx]\n\
+command=nginx -g "daemon off;"\n\
+autostart=true\n\
+autorestart=true\n\
+stderr_logfile=/var/log/supervisor/nginx.err.log\n\
+stdout_logfile=/var/log/supervisor/nginx.out.log\n' > /etc/supervisor/conf.d/supervisord.conf
+
+RUN mkdir -p /var/log/supervisor
+
+# Validate nginx config at build time
 RUN nginx -t
 
-CMD php-fpm -D && nginx -g 'daemon off;'
-
 EXPOSE 80
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
