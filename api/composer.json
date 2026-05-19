@@ -1,0 +1,11 @@
+{
+    "name": "hakunamatata/api",
+    "description": "Hakunamatata REST API",
+    "type": "project",
+    "require": {
+        "php": ">=8.2"
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
