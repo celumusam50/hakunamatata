@@ -1,14 +1,9 @@
 FROM php:8.2-apache
 
-# Forcefully fix MPM by writing directly to load files
-RUN echo "LoadModule mpm_prefork_module /usr/lib/apache2/modules/mod_mpm_prefork.so" > /etc/apache2/mods-enabled/mpm_prefork.load \
-    && rm -f /etc/apache2/mods-enabled/mpm_event.load \
-              /etc/apache2/mods-enabled/mpm_event.conf \
-              /etc/apache2/mods-enabled/mpm_worker.load \
-              /etc/apache2/mods-enabled/mpm_worker.conf \
-    && ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
-    && ln -sf /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/rewrite.load \
-    && ln -sf /etc/apache2/mods-available/rewrite.conf /etc/apache2/mods-enabled/rewrite.conf 2>/dev/null || true
+# Fix MPM conflict cleanly using a2dismod/a2enmod
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork \
+    && a2enmod rewrite
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
