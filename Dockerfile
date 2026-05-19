@@ -1,9 +1,11 @@
 FROM php:8.2-apache
 
-# Fix MPM conflict cleanly using a2dismod/a2enmod
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
-    && a2enmod mpm_prefork \
-    && a2enmod rewrite
+# Nuclear MPM fix - remove everything and force only prefork via symlinks
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load \
+          /etc/apache2/mods-enabled/mpm_*.conf \
+    && ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
+    && ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
+    && ln -sf /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/rewrite.load
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
