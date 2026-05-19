@@ -317,7 +317,7 @@ body{font-family:'DM Sans',sans-serif;background:#F7F6F3;color:#2E2E2E;min-heigh
 <div class="toast" id="toast"></div>
 
 <script>
-const API = window.location.origin + '/hakunamatata_v3/api';
+const API = window.location.origin + '/api';
 const VAT_RATE = 0.15;
 let cartTotals  = { subtotal:0, addonTotal:0, vat:0, discountAmt:0, total:0 };
 let cartDiscount= null;

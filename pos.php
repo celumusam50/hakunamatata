@@ -466,7 +466,7 @@ body{font-family:'DM Sans',sans-serif;background:#F7F6F3;color:#2E2E2E;display:f
 
 <script>
 // ── Config ───────────────────────────────────────────────────────────
-const API = 'http://localhost/hakunamatata_v3/api';
+const API = window.location.origin + '/api';
 
 // ── Auth ─────────────────────────────────────────────────────────────
 const token = localStorage.getItem('access_token');
@@ -650,7 +650,7 @@ function renderProductGrid(products){
     const stockCls   = outStock ? 'out' : lowStock ? 'low' : '';
     return `<div class="prod-card${outStock?' unavailable':''}" onclick="${outStock?'showToast(\'Out of stock\',\'warn\')':'addToCart('+p.id+')'}">
       <div class="prod-img">
-        ${p.img_url?`<img src="${(p.img_url&&!p.img_url.startsWith('http')?'http://localhost/hakunamatata_v3'+p.img_url:p.img_url)}" alt="${esc(p.name)}" onerror="this.style.display='none'">`:
+        ${p.img_url?`<img src="${(p.img_url&&!p.img_url.startsWith('http')?'window.location.origin'+p.img_url:p.img_url)}" alt="${esc(p.name)}" onerror="this.style.display='none'">`:
           p.emoji?`<div class="prod-img-placeholder" style="font-size:32px">${esc(p.emoji)}</div>`:
           `<div class="prod-img-placeholder">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>

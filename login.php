@@ -538,7 +538,7 @@ body {
 
 <script>
 // ── Config ─────────────────────────────────────────────────────────
-const API = window.location.origin + '/hakunamatata_v3/api';
+const API = window.location.origin + '/api';
 
 // Already logged in? Redirect to correct dashboard
 (function(){

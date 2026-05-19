@@ -1041,7 +1041,7 @@ body{font-family:'DM Sans',sans-serif;background:#F7F6F3;color:#2E2E2E;min-heigh
 
 <script>
 // ── Config ───────────────────────────────────────────────────
-const API = window.location.origin + '/hakunamatata_v3/api';
+const API = window.location.origin + '/api';
 
 // ── Auth (localStorage — same pattern as customer.php) ────────
 const token = localStorage.getItem('access_token'); // kept for legacy; authFetch uses _liveToken
@@ -1453,7 +1453,7 @@ async function loadProductForEdit(id){
     if(cat) $('prod-type').value=cat.type||'';
   }
   // Image preview
-  const BASE_URL=window.location.origin+'/hakunamatata_v3/api';
+  const BASE_URL=window.location.origin+'/api';
   const rawImg=p.img_url||p.image_url||'';
   const imgSrc=rawImg?(rawImg.startsWith('http')?rawImg:BASE_URL+rawImg):'';
   if(imgSrc){ const img=$('prod-img-preview'); img.src=imgSrc; img.classList.add('show'); $('prod-img-clear').classList.add('show'); $('prod-img-hint').style.display='none'; }
@@ -2737,7 +2737,7 @@ const lovConfigs={
     },
     render:(item)=>{
       const _raw=item.img_url||item.image_url||'';
-      const _src=_raw?(_raw.startsWith('http')?_raw:window.location.origin+'/hakunamatata_v3/api'+_raw):'';
+      const _src=_raw?(_raw.startsWith('http')?_raw:window.location.origin+'/api'+_raw):'';
       return {
         avatar: _src?`<img src="${esc(_src)}">`:`<div style="width:28px;height:28px;border-radius:6px;background:var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:14px">🍽️</div>`,
         name: item.name||'Product',

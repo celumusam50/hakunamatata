@@ -334,7 +334,7 @@ body{font-family:'DM Sans',sans-serif;background:#F7F6F3;color:#2E2E2E;min-heigh
 
 <script>
 // ── Config ────────────────────────────────────────────────────────────
-const API = window.location.origin + '/hakunamatata_v3/api';
+const API = window.location.origin + '/api';
 const REFRESH_INTERVAL = 10; // seconds — fast enough to catch assignments without hammering server
 
 // ── Auth ──────────────────────────────────────────────────────────────

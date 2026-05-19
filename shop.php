@@ -607,7 +607,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F7F6F3; color: #2E2E2E; 
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────
-const API = window.location.origin + '/hakunamatata_v3/api';
+const API = window.location.origin + '/api';
 
 // ── State ───────────────────────────────────────────────────────────
 let currentType = '';
@@ -734,7 +734,7 @@ function renderProducts(items) {
                 : '';
 
     const _imgRaw = p.img_url || p.image_url || '';
-    const _imgSrc = _imgRaw ? (_imgRaw.startsWith('http') ? _imgRaw : window.location.origin + '/hakunamatata_v3/api' + _imgRaw) : '';
+    const _imgSrc = _imgRaw ? (_imgRaw.startsWith('http') ? _imgRaw : window.location.origin + '/api' + _imgRaw) : '';
     const img = _imgSrc
       ? '<img class="card-img" src="' + esc(_imgSrc) + '" alt="' + esc(p.name) + '"' +
         ' onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>' +

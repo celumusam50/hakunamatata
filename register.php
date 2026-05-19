@@ -354,7 +354,7 @@ body{font-family:'DM Sans',sans-serif;background:#fff;display:flex;flex-directio
 </div>
 
 <script>
-const API = window.location.origin + '/hakunamatata_v3/api';
+const API = window.location.origin + '/api';
 
 // Redirect if already logged in
 const token = localStorage.getItem('access_token');

@@ -631,7 +631,7 @@ body { font-family: 'DM Sans', sans-serif; background: #F7F6F3; color: #2E2E2E; 
 ══════════════════════════════════════════════════════════════════ -->
 <script>
 // ── Config ──────────────────────────────────────────────────────────
-const API = window.location.origin + '/hakunamatata_v3/api';
+const API = window.location.origin + '/api';
 const DELIVERY_FEE = 80.00;
 
 // ── Auth check ──────────────────────────────────────────────────────
@@ -805,7 +805,7 @@ function renderCart() {
     const lineTotal = parseFloat(item.line_total || ((item.unit_price || item.price) * item.quantity) || 0);
     return `<div class="cart-item" id="ci-${item.cart_id}">
       <div class="cart-img">
-        ${(()=>{const _r=item.img_url||item.image_url||'';const _s=_r?(_r.startsWith('http')?_r:'http://localhost/hakunamatata_v3'+_r):'';return _s?`<img src="${esc(_s)}" alt="${esc(item.name)}" onerror="this.style.display='none'"/>`:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;})()}
+        ${(()=>{const _r=item.img_url||item.image_url||'';const _s=_r?(_r.startsWith('http')?_r:'window.location.origin'+_r):'';return _s?`<img src="${esc(_s)}" alt="${esc(item.name)}" onerror="this.style.display='none'"/>`:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;})()}
       </div>
       <div class="cart-info">
         <div class="cart-name">${esc(item.name)}</div>
