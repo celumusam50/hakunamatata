@@ -1,11 +1,8 @@
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
-# Nuclear MPM fix - remove everything and force only prefork via symlinks
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.load \
-          /etc/apache2/mods-enabled/mpm_*.conf \
-    && ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
-    && ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
-    && ln -sf /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/rewrite.load
+# Install Nginx
+RUN apt-get update && apt-get install -y nginx \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
@@ -23,25 +20,27 @@ RUN if [ -f htaccess ] && [ ! -f .htaccess ]; then cp htaccess .htaccess; fi
 # Install PHP dependencies
 RUN cd api && composer install --no-dev --optimize-autoloader
 
-# Configure Apache VirtualHost
-RUN rm -f /var/www/html/index.html \
-    && echo '<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html\n\
-    DirectoryIndex splash.php index.php\n\
-    <Directory /var/www/html>\n\
-        Options Indexes FollowSymLinks\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-    <Directory /var/www/html/api>\n\
-        Options Indexes FollowSymLinks\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+# Configure Nginx
+RUN echo 'server { \n\
+    listen 80; \n\
+    root /var/www/html; \n\
+    index splash.php index.php index.html; \n\
+    location / { \n\
+        try_files $uri $uri/ /index.php?$query_string; \n\
+    } \n\
+    location ~ \.php$ { \n\
+        fastcgi_pass 127.0.0.1:9000; \n\
+        fastcgi_index index.php; \n\
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \n\
+        include fastcgi_params; \n\
+    } \n\
+}' > /etc/nginx/sites-available/default
 
 RUN mkdir -p api/uploads/products \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 api/uploads
+
+# Start both PHP-FPM and Nginx
+CMD service nginx start && php-fpm
 
 EXPOSE 80
