@@ -34,13 +34,17 @@ COPY . .
 # Install PHP dependencies
 RUN cd api && composer install --no-dev --optimize-autoloader
 
-# Remove default Apache page and enable .htaccess overrides
-RUN rm -f /var/www/html/index.html \
-    && echo '<Directory /var/www/html>\n\
-    Options Indexes FollowSymLinks\n\
-    AllowOverride All\n\
-    Require all granted\n\
-</Directory>' >> /etc/apache2/sites-available/000-default.conf
+# Remove Ubuntu default Apache page (AFTER copying project files)
+RUN rm -f /var/www/html/index.html /var/www/html/index.htm \
+    && echo '<VirtualHost *:80>\n\
+    DocumentRoot /var/www/html\n\
+    DirectoryIndex splash.php index.php\n\
+    <Directory /var/www/html>\n\
+        Options Indexes FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Fix uploads folder permissions
 RUN mkdir -p api/uploads/products \
