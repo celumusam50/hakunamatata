@@ -1,10 +1,9 @@
 FROM php:8.2-apache
 
-# Fix Apache MPM conflict: disable event, enable prefork (required for PHP)
-RUN a2dismod mpm_event && a2enmod mpm_prefork
-
-# Enable Apache mod_rewrite (needed for API routing)
-RUN a2enmod rewrite
+# Fix Apache MPM conflict — disable ALL MPMs then re-enable only prefork
+RUN apt-get update -qq \
+    && a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork rewrite
 
 # Install PHP extensions needed for MySQL
 RUN docker-php-ext-install pdo pdo_mysql
